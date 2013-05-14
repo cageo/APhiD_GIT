@@ -1,0 +1,57 @@
+#!/bin/bash
+
+INPUT_FILE="aphid_mpi.input"
+SOURCE_FILE="aphid_mpi.source"
+FREQ_FILE="aphid_mpi.freq"
+#  OMP_NUM_THREADS=4
+
+STYPE=$(sed -n '4p;4q' $INPUT_FILE | awk '{print $1}')
+NUM_FREQ=$(sed -n '4p;4q' $FREQ_FILE | awk '{print $1}')
+# OMP_NUM_THREADS=$(sed -n '8p;8q' $INPUT_FILE | awk '{print $1}')
+
+
+echo " "
+echo "!============================= PROJECT APhiD =============================!"
+echo "!             MPI-launcher for multiple sources and frequencies           !"
+echo "!            Chester J Weiss, Dept of Geosciences, Virginia Tech          !"
+echo "!=========================================================================!"
+echo " "
+
+if [ $STYPE == "MT" ]
+then 
+  let "NUM_SOURCE=2"
+  if [ $NUM_FREQ -eq 1 ]
+  then echo "Magnetotelluric source on $NUM_FREQ frequency"
+  else echo "Magnetotelluric source over $NUM_FREQ frequencies"
+  fi
+fi
+
+if [ $STYPE == "CS" ]
+then
+  let "NUM_SOURCE=$(sed -n '4p;4q' $SOURCE_FILE | awk '{print $1}')"
+
+  if [ $NUM_FREQ -eq 1 ] 
+  then 
+    if [ $NUM_SOURCE -eq 1 ]
+    then echo "$NUM_SOURCE Electric dipole array on $NUM_FREQ frequency"
+    else echo "$NUM_SOURCE Electric dipole arrays on $NUM_FREQ frequency"
+    fi
+  fi
+
+  if [ $NUM_FREQ -ne 1 ] 
+  then 
+    if [ $NUM_SOURCE -eq 1 ]
+    then echo "$NUM_SOURCE Electric dipole array on $NUM_FREQ frequencies"
+    else echo "$NUM_SOURCE Electric dipole arrays on $NUM_FREQ frequencies"
+    fi
+  fi
+fi
+
+let "NPROC=$NUM_SOURCE*$NUM_FREQ"
+let "NTHREAD=$NPROC*$OMP_NUM_THREADS"
+echo "Initializing MPI job with $NPROC processes at $OMP_NUM_THREADS threads per process."
+echo " "
+echo ">>> Total number of threads = $NTHREAD <<<"
+echo " "
+
+mpirun -x OMP_NUM_THREADS -n $NPROC aphid_parallel

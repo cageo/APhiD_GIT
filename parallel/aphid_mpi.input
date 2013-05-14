@@ -1,0 +1,7 @@
+========================================================================
+APHID Input File: Operational parameters for PARALLEL MPI computation
+========================================================================
+MT        !! mode of operation (either 'MT', or 'CS' for dipole array)
+1.d-18    !! QMR target residual
+2000      !! max QMR iterates
+R         !! conductivity model: [R]eal, [C]omplex, [D]ispersive, [I]nsulator

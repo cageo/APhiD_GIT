@@ -1,0 +1,21 @@
+========================================================================
+Instructions for serial execution of APhiD software.
+========================================================================
+0.  consult the manpage
+1.  build mesh file: compile gen_mesh.f90; a.out > aphid.mesh
+2.  edit aphid.input for source specification, QMR parameters, etc
+3.  if using a dipole source (operation mode 5), edit aphid.source
+    for electric dipole orientations and the (i,j,k) index of their
+    tail ends.
+4.  set environment variable OMP_NUM_THREADS to either 1 or 4, depending
+    on whether multi-threading is wanted or not.
+5.  type aphid_serial at the command line and wait... (*)
+6.  fields and outputs are given in VTK file format.  Parse as needed
+    for plotting and analysis.
+
+(*) alternatively, the various input filds aphid.* could be dropped into
+a directory 'pwd' other than the working one. If that's the case, then
+use the command line option '-wd pwd' to redirect vtk output.
+
+
+

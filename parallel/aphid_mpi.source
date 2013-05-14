@@ -1,0 +1,25 @@
+========================================================================
+APHID: list of controlled-source electric dipole array sources
+========================================================================
+3              !  number of dipole arrays
+
+========================================================================
+dipole array definition =====================================  + ..... -
+========================================================================
+1              ! number of elementary dipoles in array
++X 50 50 51    ! direction and i,j,k index numbers of one dipole in array
+
+========================================================================
+dipole array definition =====================================  + ..... -
+========================================================================
+2              ! number of elementary dipoles in array
++X 50 50 51    ! direction and i,j,k index numbers of one dipole in array
++X 52 50 51    ! i,j,k index numbers of one dipole in array
+
+========================================================================
+dipole array definition =====================================  + ..... -
+========================================================================
+2              ! number of elementary dipoles in array
++Y 50 50 51    ! direction and i,j,k index numbers of one dipole in array
++Y 50 52 51    ! i,j,k index numbers of one dipole in array
+

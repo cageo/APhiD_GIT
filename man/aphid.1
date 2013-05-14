@@ -1,0 +1,242 @@
+.TH APHID " " " " "last updated: Mar 19, 2013" " " 
+
+
+.B PROJECT APHID: A Lorenz-gauged A-Phi Decomposition for computing the broadband electromagnetic response of heterogeneous conductive and dielectric media
+.LP
+Chester J Weiss
+.br 
+Department of Geosciences, Virginia Tech
+.br 
+cjweiss@vt.edu, chester.weiss@gmail.com
+.br
+SVN repository -- https://moonpie.geos.vt.edu/svn/APHID 
+
+.SH INTRODUCTION
+
+.B Project APhiD 
+is a program for computing the broadband frequency-domain
+response of arbitrary 3D conductive/dielectric media stimulated by either planewave
+MT sources or an assemblage of filamentary electric current density elements.   
+The program is based on a Helmholz decomposition in terms of the Lorenz-gauged magnetic 
+vector and electric scalar potentials on a staggered Cartesian Yee (1966) grid, with
+the governing set of coupled PDE's discretized by 2nd-order accurate finite differences.
+The resulting linear system of equations is solved iteratively by the Quasi-Minimal-Residual
+method (Freund and Nachtigal, 1994) with simple Jacobi preconditioning.  Program output
+is in standard vtk format, readable by most 3D data rendering packages, with separate files
+for components of electric, induction and current density fields on the
+Yee grid.  For convenience, a composite vtk file is also provided with these same 
+edge-based quantities interpolated onto grid nodes for rendering convenience with 
+*full knowledge* that when such nodes lie on a conductivity boundary, not all
+components of the electric/current fields are well defined.
+
+.SH REVISION HISTORY
+
+Up to R67 on the SVN resository, the QMR was OpenMP parallelized over 4 threads, resulting
+in a reduction in runtimes of roughly 50%, depending on the problem size and hardware. R68-R72 
+extend the parallelization to hybrid MPI-OpenMP scheme where multiple 4-thread jobs are distributed
+across separate MPI processes according to source geometry and/or frequency.  Such a scheme favors quad-core
+chips where the threads can access the same cache.  However, with dual and hex-core chips available, this 
+parallelization strategy doesn't scale well.  R73 and onward have the OpenMP multi-threaded parallization
+removed, greatly simplifying scheduling/binding issues on parallel clusters and multi-socket motherboards. 
+
+SVN R82 is the official release version.  In it the OpenMP parallelization is reinstated,
+with multi-threading controlled through the environment variable OMP_NUM_THREADS which 
+is permitted to take a value of either 1 or 4.   This enables single- and four-thread 
+jobs to be run in both "serial" (one process) or multi-process MPI mode.
+
+.SH SERIAL VERSION
+.LP  
+A slight misnomer since the following description applies to multi-threaded versions of the 
+program.  Forward modeling calculation is invoked by 
+.B aphid_serial
+at the command line in the working directory containing the requisite input files.  
+OpenMP multithreading is controlled through the environment variable OMP_NUM_THREADS, 
+which may be set to either 1 or 4.  Other values are not permitted.
+If you're working 
+with a build pre-R67, be sure that environment variable OMP_NUM_THREADS is set to 4.  Versions post-R67
+are not multi-threaded.   Output on 
+progress of the calculation is piped to the terminal window.  Output files containing the electric, magnetic
+and current density fields are written to the working directory in standard VTK format (http://www.vtk.org/VTK/img/file-formats.pdf) for rendering with popular data viewers such as Paraview (http://www.paraview.org)
+or VisIt (https://wci.llnl.gov/codes/visit/).  Also translated to VTK format is the input mesh and conductivity
+file.
+.SS Definition of Serial Input Files
+.B aphid.input 
+contains runtime parameters for source type, frequency, QMR parameters and conductivity model.
+.IP "line 1-3:"  12
+ignored by program - space for comments
+.IP "line 4:"  12
+mode of calculation -- [1] x-directed dipole at origin, [2] x-polarized MT plane wave, [3] y-polarized MT plane wave, [4] fixed square loop for testing, [5] dipole(s) defined in aphid.source
+.IP "line 5:"  12
+target reduction in QMR residual
+.IP "line 6:"  12
+maximum QMR iterates
+.IP "line 7:"  12
+source frequency in Hertz
+.IP "line 8:"  12
+type of conductivity model specified in aphid.mesh - [R]eal conductivities only; fully [C]omplex conductivity 
+with a block of real values followed by a block of relative dielectric permittivity; [D]ispersive 
+Cole-Cole model with 4 blocks (sig_DC, eta, tau and c); [I]nsulating dielectric with a single block of relative 
+permittivity.
+
+.P
+.B aphid.mesh 
+contains the node coordinates of the Cartesian mesh and cell-based conductivity model data.  Beginning of 
+file is structured for all conductivity types (R/C/D/I) as ...
+.P
+.IP "(line 1)"  12
+NX NY NZ, the node coordinates
+.IP "(line)"
+not read - can be filled with comment such as 'x-values' if helpful to the user.
+.IP [block]  12
+list of x values for grid points listed in order of increasing x.  Block needn't be structured any particular
+way; code reads the NX values regardless of how many values per line are used.
+.IP "(line)"
+not read - can be filled with comment such as 'y-values' if helpful to the user.
+.IP [block]  12
+list of y values for grid points listed in order of increasing y.  Block needn't be structured any particular
+way; code reads the NY values regardless of how many values per line are used.
+.IP "(line)"
+not read - can be filled with comment such as 'z-values' if helpful to the user.
+.IP [block] 12
+list of z values for grid points listed in order of increasing z.  Block needn't be structured any particular
+way; code reads the NZ values regardless of how many values per line are used.
+.P
+The remainder of the file is model type dependent, consisting of blocks of conductivity parameters listed
+block-wise in fortran-style indexing as (((sig(i,j,k),i=1,NX-1),j=1,NY-1),k=1,NZ-1).  Between blocks 
+lies an unread line which can be used for user-friendly annotation such as "real conductivity" or 
+"chargeability".  Order and number of blocks is as follows:
+.IP [R] 12
+Real-valued conductivity:  (line) [sigma_re] 
+.IP [C] 12
+Complex-valued conductivity: (line) [sigma_DC] (line) [eps_rel]
+.IP [D] 12
+Cole-Cole: (line) [sigma_re] (line) [eta] (line) [tau] (line) [c]
+.IP [I] 12
+Insulator: (line) [eps_rel]
+
+.P
+.B aphid.source 
+contains a list of (i,j,k) node indices and  directions +/- 
+X, Y or Z to specify an assemblage of electric dipoles along mesh edges, tail-end pinned to the (i,j,k) node.
+Format is linewise and all lines are read until end of file is reached.  No "header" specifying how many 
+lines to read is necessary; APhiD reads 'em all.  Format for each line is
+" {+/-}{X/Y/Z} {i} {j} {k} ". Note the spaces between the direction specifier and indices.  Make the list as
+long or as short as needed.  One dipole per line.  Order of lines is irrelvant.
+
+.
+.SH PARALLEL VERSION
+.LP  
+High-level functional decompostion of the serial code over source/frequency pairs.  Each process runs
+as a non-communcative serial job that is initialized from one master process reading the input and doling 
+out the work assignments.  Binary version is 
+.B aphid_parallel
+which can be called directly from mpiexec.  Also included is a launching script
+.B aphid_mpi
+which peeks into the input files and automatically sets the number of processors for parallel execution.
+.P
+Program 
+.B aphid_parallel
+runs by first reading the input files listed below for NFREQ frequencies and NSRC source 
+configurations.  In the case
+of an MT problem NSRC=2, corresponding to each of the two source polarization modes for the MT plane wave.  
+Controlled source problems, CS, the number NSRC is specified on line 4 of the input file 
+.B
+aphid_mpi.source.
+Total number of parallel jobs is thus NPROC=NFREQ*NSRC.  The program then proceeds by using the 
+'system' call in FORTRAN to create working directories 'tmp-xxx' where xxx is a unique process 
+ID number ranging from 1 to NPROC.  The mesh file 
+.B
+aphid.mesh
+is copied into each of these subdirectories along with serial-version input files 
+.B
+aphid.input
+(and optionally,
+.B
+aphid.source
+) based on a particular FREQ/SRC pair specified in the *_mpi.* input files (see below). 
+Note that the first NFREQ processes correpspond to the frequency response for source
+configuration 1, the next NFREQ for configuration 2, and so on.  Thus, for MT impedance 
+tensor estimation (not yet implemented as a main part of the APhiD program, but rather, left
+as a post-processing exercise) the two polarization modes for a given frequency i are 
+given by process ID i and i+NFREQ.
+
+Note that like the serial version, the parallel processes can be run in single- or 
+multi-thread mode, control of which is governed by the value of environment 
+varialble OMP_NUM_THREADS.  Permitted values are either 1 or 4.
+
+.P
+.SS Definition of Parallel Input Files
+.B aphid_mpi.input 
+Just like the serial version with the following exceptions: the operation mode is now restricted to 
+"MT" for magnetotelluric or "CS" for controlled-source dipole array; and, the frequency specification 
+line is simply omitted with no whitespace, carriage return or empty line to remind us of its absence.  
+The MT  parallel operation mode invokes serial modes
+2 and 3 as separate forward runs for each polarization of the plane wave source.  The CS parallel operation mode
+invokes serial mode 5, whereby the dipole arrays (no matter how simple or short) are read from 
+.B
+aphid_mpi.source
+.
+.P
+.B aphid_mpi.source
+A slightly modified and more explicit version of its serial mode counterpart listing all dipole arrays to be 
+used as sources for a given forward calculation.   Dipole arrays can be arbitrary length, consisting of a 
+single dipole, or a multiple dipoles representing segments along a grid-conforming path such as as 
+square loop.  Format is as follows...
+.IP "line 1-3:"  12
+ignored by program - space for comments
+.IP "line 4:"  12
+integer, NSRC number of dipole arrays to be read.
+.IP "line 5:"  12
+ignored by program - space for comments
+.IP "line 6-8:"  12
+ignored by program - three line header for source first assemblage of N1 dipoles
+.IP "line 9:"  12
+integer, N1, number of dipoles in first source assemblage
+.IP "line 10-(10+N1-1):"  12
+dipoles in the usual  {+/-}{X/Y/Z} {i} {j} {k} format
+.IP "line 10+N1:"  12
+ignored by program - space for comments, separator between dipole assemblage specifications
+.IP ...
+repeat previous block structure for each of the N dipoles...
+.P
+.B aphid.mesh
+This is the same as for the serial version.
+.P
+.B aphid_mpi.freq
+frequency array to be evaluated.  Line 1 is the number of frequencies, NFREQ.  Subsequent lines each list 
+one frequency in Hertz.
+
+.P
+.SH PACKAGE CONTENTS AND BUILDING
+Package management is handled via SVN at https://moonpie.geos.vt.edu/srv/APHID.
+Included in the ./src directory are the following files
+
+.B src/Makefile 
+ Skeleton Makefile file formatted for compliation on specific user-defined platforms.  Setting compiler, library and optimization options is handled here in the first part of file with no need for user-modification in the actactual build lines later in the file.  Typing 'make clean; make' builds the serial version; 'make clean; make 
+parallel' builds the parallel version. 
+
+.B parallel/run_mpi
+ Bash shell for launching parallel jobs.  Place somewhere executable like ~/bin and be sure to set
+chmod accordingly.
+
+.B src/aphid_mod.f90
+FORTRAN modules for physical constants and data structures shared across multiple subroutines and 
+functions within the program.
+
+.B src/aphid.f90
+Set of main FORTRAN routines for reading serial input, defining the finite difference linear system
+and writing the output.
+
+.B src/aphid_serial.f90
+Driver routine for launching serial calculations via executable 
+.B aphid_serial
+stored in directory $DEST defined in the Makefile.
+
+.B src/aphid_parallel.f90
+Driver routine for launching MPI-paralleized serial calculations via executable 
+.B aphid_parallel
+stored in directory $DEST defined in the Makefile.
+
+.B src/aphid_qmr.f90
+Freund and Nachtical (1994) Quasi-Minimal-Residual (QMR) iterative linear solver routine.
+Two versions are included here: routine 'qmr' for single-threaded OpenMP mode and 'qmr_mthread' for four-thread OpenMP mode.

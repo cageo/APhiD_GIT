@@ -1,0 +1,8 @@
+========================================================================        
+APHID Input File: Operational parameters for PARALLEL MPI computation           
+========================================================================        
+2         !! operational mode
+1.d-12    !! QMR target residual                                                
+2000      !! max QMR iterates                                                   
+1.d-02    !! frequency [Hz]
+R         !! conductivity model: [R]eal, [C]omplex, [D]ispersive, [I]nsulator

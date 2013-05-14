@@ -1,0 +1,2 @@
+view manpage in situ via 'nroff -man aphid.1 | less'.
+make globally accessable by copying to man/man1 in the current $MANPATH.
