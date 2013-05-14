@@ -13,7 +13,7 @@
 #  BUILD OPTIONS                                                              #
 #                                                                             #
 #  make serial (default) : install serial version in $(DEST)                  #
-#  make parallel         : install serial version in $(DEST)                  #
+#  make parallel         : install parallel version in $(DEST)                #
 #  make man              : install man page in $(MANPATH), 'man aphid' to see #
 #  make clean            : delete *.o, *.mod files                            #
 #                                                                             #
@@ -34,7 +34,7 @@ ifeq ($(PLATFORM),mac_ifort)
   F77 = mpif77
   OPTS = -O3 -fpp -DSVN_VERSION_DEF="svn_version_string = '`svnversion`'" -parallel -heap-arrays
   FOPTS = -O3 
-  LIBS = -lmpi -llapack
+  LIBS = -lmpi 
   DEST = /Users/cjweiss/bin
   MANPATH = /usr/local/man/man1/.
 endif
@@ -55,7 +55,7 @@ ifeq ($(PLATFORM),altix)
   F77 = ifort
   OPTS =   -O2 -ipo -shared-intel -fpp -DSVN_VERSION_DEF="svn_version_string = '`svnversion`'"
   FOPTS = -O2  -ipo
-  LIBS = -lmpi -lmkl_lapack  -lmkl_ipf 
+  LIBS = -lmpi -lmkl_ipf  
   DEST = /home/cjweiss/bin/.
   MANPATH = /usr/local/man/man1/.
 endif
@@ -68,7 +68,7 @@ ifeq ($(PLATFORM),cabernet)
   FOPTS =   -O3 
   OPTS =   -O3 -x f95-cpp-input -DSVN_VERSION_DEF="svn_version_string = '`svnversion`'"
   INCL = -I/usr/include
-  LIBS = -lmpi -llapack
+  LIBS = -lmpi 
   DEST = /home/cjweiss/bin/.
   MANPATH = /usr/local/man/man1/.
 endif
@@ -79,7 +79,7 @@ ifeq ($(PLATFORM),hess)
   F90 = mpif90
   F77 = mpif77
   OPTS = -O3 -i_dynamic -fpp -DSVN_VERSION_DEF="svn_version_string = '`svnversion`'"
-  LIBS = -lmpi -lmkl_lapack -lmkl 
+  LIBS = -lmpi -lmkl 
   DEST = /home/cjweiss/bin
   MANPATH = /usr/local/man/man1/.
 endif
@@ -89,9 +89,9 @@ ifeq ($(PLATFORM),mac_gfortran)
   F77 = mpif90
   FOPTS =   -O3 
   OPTS =  -fcheck=bounds -m64 -O3 -x f95-cpp-input -DSVN_VERSION_DEF="svn_version_string = '`svnversion`'" -fopenmp
-  OPTS =  -m64 -O3 -x f95-cpp-input -DSVN_VERSION_DEF="svn_version_string = '`svnversion`'" -fopenmp -lmpi
+  OPTS =  -m64 -O3 -x f95-cpp-input -DSVN_VERSION_DEF="svn_version_string = '`svnversion`'" -fopenmp 
   INCL = -I/usr/include
-  LIBS = -llapack
+  LIBS = -lmpi
   DEST = /home/cjweiss/bin/.
   MANPATH = /usr/local/man/man1/.
 endif

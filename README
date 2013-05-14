@@ -1,0 +1,25 @@
+README file for APhiD EM modeling software described in...
+
+Weiss CJ, Project APhiD: A Lorenz-gauged {\bf A}-$\Phi$ Decomposition for parallelized computation of ultra-broadband electromagnetic induction in a fully heterogeneous Earth, Computers & Geosciences, CAGEO-D-13-00212R1 (2013)
+
+Initial software upload (R84) from local svn server at Virginia Tech. 
+
+directory   contents
+doc/.       pre-print of C&G manuscript
+man/.       manpage 
+src/.       makefile and source code 
+serial/.    skeleton files for running multi-threaded serial code
+parallel/.  skeleton files for running multi-threaded serial code over multiple MPI-controlled processes
+
+
+To build code, modify the Makefile in ./src by defining the build plaform, destination directories for manpage and executables.  Note that each various platforms for machines at Virginia Tech are already defined.  To maintain maximum portability and to inform others of successful build options, it's advised that the precedent started here is maintained.  Once the executables are built and safely tucked away in the $DEST directory, running the code requires setting the environment varialble OMP_NUM_THREADS to either 1 or 4.  Consult your shell manpage (bash/csh/...) for syntax.  Values onther than 1 or 4 are not allowed. 
+
+Two modes are available for program execution.
+1.  typing 'aphid_serial' at the command line for multi-threaded executution, depending on value of OMP_NUM_THREADS.
+2.  typing 'aphid_mpi' at the command line for parallel, MPI-controlled multi-threaded processes.
+
+Skeleton files for cases 1 and 2 are found in subdirectories 'serial' and 'parallel', respectively.  
+See README files therein for further instructions.
+
+Note: Program development was archived on an SVN server at Virginia Tech, and Makefile contains build instructions which query the current SVN build revision.  These are safely ignored in the absense of SVN, but if SVN is installed and hte current directory is SVN controlled, then the revision number of the current build is used in the complilation.  Excecutables from SVN-controlled directories inform the user of which revision the current binary is built upon when the program is run.  This enables results from different builds to be compared and conveniently documented.  Translating this feature to GIT remains to be done...
+
